@@ -12,11 +12,12 @@ var SideBar = {
         }
         var newParams = {vm: vm};
         return m('.sidebar', [
+                m.component(AddFilterButton, newParams),
                 m.component(ActiveFiltersHeader, newParams),
                 m.component(ActiveFilters, newParams),
                 m.component(ProviderList, newParams)
         ]);
-    },
+    }
 };
 
 var ActiveFiltersHeader = {
@@ -41,7 +42,7 @@ var ActiveFiltersHeader = {
 var ActiveFilters = {
     view: function(ctrl, params){
         var vm = params.vm;
-        var filters = vm.optionalFilters.concat(vm.requiredFilters);
+        var filters = vm.extraFilters.concat(vm.optionalFilters.concat(vm.requiredFilters));
 
         return (filters.length > 0) ? m('ul.unstyled',
             $.map(filters, function(filter){
@@ -62,6 +63,18 @@ var ActiveFilters = {
                 ]);
         })) : m('');
 
+    }
+};
+
+var AddFilterButton = {
+    view: function (ctrl, params) {
+        var vm = params.vm;
+        return m('.provider-list', [
+            m('.sidebar-header', 'Add Filter:'),
+            m('ul.unstyled', $.map(vm.sortProviders(), function(provider, index) {
+                return m.component(Provider, {vm: vm, provider: provider});
+            }))
+        ]);
     }
 };
 

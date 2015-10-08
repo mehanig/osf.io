@@ -31,6 +31,8 @@ ShareApp.ViewModel = function() {
     self.showFooter = (self.query() === '');
     self.requiredFilters = $osf.urlParams().required ? $osf.urlParams().required.split('|') : [];
     self.optionalFilters = $osf.urlParams().optional ? $osf.urlParams().optional.split('|') : [];
+    self.extraFilters = $osf.urlParams().extra ? $osf.urlParams().extra.split('|') : [];
+    console.log(self.optionalFilters, self.requiredFilters, self.extraFilters);
 
     self.sortMap = {
         'Date': 'providerUpdatedDateTime',
@@ -76,7 +78,8 @@ ShareApp.controller = function() {
         query: self.vm.query(),
         sort: self.vm.sort(),
         optionalFilters: self.vm.optionalFilters,
-        requiredFilters: self.vm.requiredFilters
+        requiredFilters: self.vm.requiredFilters,
+        extraFilters: self.vm.extraFilters
     }, 'OSF | SHARE', '?' + utils.buildURLParams(self.vm));
 
     m.request({
@@ -110,6 +113,7 @@ ShareApp.controller = function() {
 
         self.vm.optionalFilters = state.optionalFilters;
         self.vm.requiredFilters = state.requiredFilters;
+        self.vm.extraFilters = state.extraFilters;
         self.vm.query(state.query);
         self.vm.sort(state.sort);
         utils.search(self.vm);

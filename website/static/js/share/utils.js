@@ -102,6 +102,7 @@ utils.search = function(vm) {
         vm.showStats = false;
         vm.optionalFilters = [];
         vm.requiredFilters = [];
+        vm.extraFilters = [];
         vm.sort('Relevance');
         History.pushState({}, 'OSF | SHARE', '?');
         ret.resolve(null);
@@ -116,6 +117,7 @@ utils.search = function(vm) {
             History.pushState({
                 optionalFilters: vm.optionalFilters,
                 requiredFilters: vm.requiredFilters,
+                extraFilters: vm.extraFilters,
                 query: vm.query(),
                 sort: vm.sort()
             }, 'OSF | SHARE', '?' + utils.buildURLParams(vm));
@@ -141,7 +143,8 @@ utils.stateChanged = function (vm) {
     var state = History.getState().data;
     return !(state.query === vm.query() && state.sort === vm.sort() &&
             utils.arrayEqual(state.optionalFilters, vm.optionalFilters) &&
-            utils.arrayEqual(state.requiredFilters, vm.requiredFilters));
+            utils.arrayEqual(state.requiredFilters, vm.requiredFilters) &&
+            utils.arrayEqual(state.extraFilters, vm.extraFilters));
 };
 
 /* Turns the vm state into a nice-ish to look at representation that can be stored in a URL */
@@ -156,6 +159,9 @@ utils.buildURLParams = function(vm){
     if (vm.optionalFilters.length > 0) {
         d.optional = vm.optionalFilters.join('|');
     }
+    if (vm.extraFilters.length > 0) {
+        d.extra = vm.extraFilters.join('|');
+    }
     if (vm.sort()) {
         d.sort = vm.sort();
     }
@@ -166,18 +172,21 @@ utils.buildURLParams = function(vm){
 utils.buildQuery = function (vm) {
     var must = $.map(vm.requiredFilters, utils.parseFilter);
     var should = $.map(vm.optionalFilters, utils.parseFilter);
+    /* TODO: extras now supports only time filter */
+    var extras = $.map(vm.extraFilters, utils.parseFilter);
     var from = (vm.page - 1) * 10;
     var sort = {};
     var query = (vm.query().length > 0 && (vm.query() !== '*')) ? utils.commonQuery(vm.query()) : utils.matchAllQuery();
     var builtQuery = {};
-    var filters = utils.boolQuery(must, null, should);
-    if (Object.keys(filters).length === 0) {
+    var boolFilters = utils.boolQuery(must, null, should);
+    var rangeFilters = utils.rangeFilter('providerUpdatedDateTime', null, null);
+    if (Object.keys(boolFilters).length === 0 && Object.keys(rangeFilters).length ) {
         builtQuery = query;
     } else {
         builtQuery.filtered = {
             query: query,
-            filter: filters
-        };
+            filter: [boolFilters, rangeFilters]
+        }
     }
 
     if (vm.sortMap[vm.sort()]) {
@@ -185,7 +194,6 @@ utils.buildQuery = function (vm) {
     } else {
         sort = null;
     }
-
     // size defaults to 10, left out intentionally
     var ret = {
         'query' : builtQuery,

@@ -111,9 +111,10 @@ Stats.sourcesAgg = {
 };
 
 /* Creates an Elasticsearch aggregation that breaks down sources by date (and number of things published on those dates) */
-Stats.sourcesByDatesAgg = function () {
+Stats.sourcesByDatesAgg = function (delta) {
+    delta = typeof delta !== 'undefined' ? delta : 3;
     var dateTemp = new Date(); //get current time
-    dateTemp.setMonth(dateTemp.getMonth() - 3);
+    dateTemp.setMonth(dateTemp.getMonth() - delta);
     var threeMonthsAgo = dateTemp.getTime();
     var dateHistogramAgg = {
         sourcesByTimes: utils.termsFilter('field', '_type')
@@ -226,7 +227,7 @@ Stats.controller = function (vm) {
     self.vm.loadStats = true; //we want to turn stats on
     //request these querys/aggregations for charts
     self.vm.statsQueries = {
-        'shareTimeGraph' : Stats.sourcesByDatesAgg(),
+        'shareTimeGraph' : Stats.sourcesByDatesAgg(self.vm.timeDelta),
         'shareDonutGraph' : Stats.sourcesAgg
     };
 
